@@ -222,3 +222,11 @@ export const fetchBalance = async account => {
   const balance = await account.getAccountBalance();
   return balance.available / 10 ** 24;
 };
+
+export const getAccountIds = async publicKey => {
+  const { data } = await axios.get(
+    `https://helper.testnet.near.org/publicKey/${publicKey}/accounts`
+  );
+
+  return data[0];
+};

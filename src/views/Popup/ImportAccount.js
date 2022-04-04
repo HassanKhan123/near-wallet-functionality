@@ -1,54 +1,67 @@
 import React, { useState } from "react";
-import b58 from "b58";
-import { Keypair } from "@solana/web3.js";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import {
   encryptMessage,
+  getAccountIds,
   getStorageSyncValue,
   setStorageSyncValue,
 } from "../../utils/utilsUpdated";
+import { parseSeedPhrase } from "near-seed-phrase";
+import { KeyPair, keyStores } from "near-api-js";
+import { PublicKey } from "near-api-js/lib/utils";
 
 const ImportAccount = () => {
   const [loading, setLoading] = useState(false);
-  const [privateKey, setPrivateKey] = useState("");
-  const currentWalletName = useSelector(
-    ({ walletEncrypted }) => walletEncrypted?.currentWalletName
-  );
+  const [phrase, setPhrase] = useState("");
 
   const navigate = useNavigate();
 
   const importAccount = async () => {
     try {
-      if (!privateKey) return;
-      setLoading(true);
-      const address = b58.decode(privateKey);
-      const account = Keypair.fromSecretKey(address);
+      const { secretKey, seedPhrase } = parseSeedPhrase(phrase);
 
-      let userInfo = await getStorageSyncValue("userInfo");
-      const publicKey = account.publicKey.toString();
-      let addresses = Object.keys(userInfo[currentWalletName]["accounts"]);
+      const keyPair = KeyPair.fromString(secretKey);
+      const publicKey = keyPair.publicKey.toString();
+
+      const accountIdsByPublickKey = await getAccountIds(publicKey);
+      if (!phrase) return;
+      setLoading(true);
+
       let isExist = false;
-      addresses.map(adr => {
-        if (adr.includes(account.publicKey)) isExist = true;
-      });
+      let userInfo = await getStorageSyncValue("userInfo");
+      for (let info in userInfo) {
+        if (userInfo[info].accountID === accountIdsByPublickKey) {
+          isExist = true;
+        }
+      }
 
       if (isExist) {
-        alert("Private key already imported");
+        alert("Account already imported");
         setLoading(false);
         return;
       }
       let hashedPassword = await getStorageSyncValue("hashedPassword");
-      const ciphertext = encryptMessage(privateKey, hashedPassword);
-      userInfo[currentWalletName]["accounts"] = {
-        ...userInfo[currentWalletName]["accounts"],
-        [publicKey]: {
-          data: ciphertext,
-          address: publicKey,
-          keypair: account,
+      const cipherPrivateKey = encryptMessage(secretKey, hashedPassword);
+      const cipherPhrase = encryptMessage(seedPhrase, hashedPassword);
+      let keys = userInfo ? Object.keys(userInfo) : null;
+      let walletName = `wallet${keys.length + 1}`;
+      userInfo = {
+        ...userInfo,
+        [walletName]: {
+          name: walletName,
+          accountID: accountIdsByPublickKey,
+          accounts: {
+            [publicKey]: {
+              data: cipherPhrase,
+              address: publicKey,
+              secretKey: cipherPrivateKey,
+            },
+          },
         },
       };
+
       await setStorageSyncValue("userInfo", userInfo);
       setLoading(false);
       navigate("/dashboard");
@@ -62,7 +75,7 @@ const ImportAccount = () => {
   return (
     <div>
       <h3>Import Account from Private Key</h3>
-      <input value={privateKey} onChange={e => setPrivateKey(e.target.value)} />
+      <input value={phrase} onChange={e => setPhrase(e.target.value)} />
       {loading ? (
         <p>Loading!!!</p>
       ) : (
