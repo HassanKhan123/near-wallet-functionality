@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import {
   CREATE_WALLET,
   SET_CURRENT_WALLET_NAME,
+  SWITCH_ACCOUNT,
 } from "../../redux/actionTypes";
 import {
   decryptMessage,
@@ -27,26 +28,55 @@ const Seedphrase = () => {
     const { phrase, address, secret } = generateSeed();
     setMnemonics(phrase);
     const hashedPassword = await getStorageSyncValue("hashedPassword");
+    const storedUserDetails = await getStorageSyncValue("userInfo");
     const cipherMnemonic = encryptMessage(phrase, hashedPassword);
     const cipherPrivate = encryptMessage(secret, hashedPassword);
+    console.log(storedUserDetails);
 
-    let userInfo = {
-      wallet1: {
-        name: "wallet1",
-        accounts: {
-          [address]: {
-            data: cipherMnemonic,
-            address: address,
-            secretKey: cipherPrivate,
+    let keys = storedUserDetails ? Object.keys(storedUserDetails) : null;
+
+    let userInfo;
+
+    if (!storedUserDetails) {
+      userInfo = {
+        wallet1: {
+          name: "wallet1",
+          accounts: {
+            [address]: {
+              data: cipherMnemonic,
+              address: address,
+              secretKey: cipherPrivate,
+            },
           },
         },
-      },
-    };
+      };
+    } else {
+      let walletName = `wallet${keys.length + 1}`;
+      userInfo = {
+        ...storedUserDetails,
+        [walletName]: {
+          name: walletName,
+          accounts: {
+            [address]: {
+              data: cipherMnemonic,
+              address: address,
+              secretKey: cipherPrivate,
+            },
+          },
+        },
+      };
+    }
 
     dispatch({
       type: CREATE_WALLET,
       payload: {
         isLoggedIn: true,
+      },
+    });
+    dispatch({
+      type: SWITCH_ACCOUNT,
+      payload: {
+        walletName: keys ? `wallet${keys.length + 1}` : "wallet1",
       },
     });
     localStorage.setItem("wallet", true);

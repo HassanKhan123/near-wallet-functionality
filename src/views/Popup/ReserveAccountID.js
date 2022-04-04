@@ -18,26 +18,29 @@ const ReserveAccountID = () => {
     ({ walletEncrypted }) => walletEncrypted?.currentWalletName
   );
 
+  const activeAccount = useSelector(
+    ({ walletEncrypted }) => walletEncrypted?.activeAccount
+  );
+
   const createAccountID = async () => {
     try {
       const near = await connect(CONFIG);
       const accountInfo = await near.account(accountID);
       const state = await checkAccountStatus(accountInfo);
       const userInfo = await getStorageSyncValue("userInfo");
+      console.log(activeAccount);
 
-      let publicKey = Object.keys(userInfo[currentWalletName]["accounts"])[0];
-      let userDetails = userInfo[currentWalletName]["accounts"];
+      let publicKey = Object.keys(
+        userInfo[activeAccount.walletName]["accounts"]
+      )[0];
 
       if (state) {
         alert("Account with this name already present");
       } else {
         await near.createAccount(accountID, publicKey);
-        userInfo[currentWalletName]["accounts"] = {
-          ...userInfo[currentWalletName]["accounts"],
-          [publicKey]: {
-            ...userInfo[currentWalletName]["accounts"][publicKey],
-            accountID,
-          },
+        userInfo[activeAccount.walletName] = {
+          ...userInfo[activeAccount.walletName],
+          accountID,
         };
         await setStorageSyncValue("userInfo", userInfo);
         alert(`Account Created!!! Your ID is ${accountID}`);

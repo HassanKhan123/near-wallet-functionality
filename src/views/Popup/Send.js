@@ -23,10 +23,14 @@ const SendTokens = () => {
     ({ walletEncrypted }) => walletEncrypted?.allTokens
   );
 
+  const activeAccount = useSelector(
+    ({ walletEncrypted }) => walletEncrypted?.activeAccount
+  );
+
   const sendTransaction = async () => {
     setLoading(true);
     try {
-      const { secret, accountID } = await initialTasks(currentWalletName);
+      const { secret, accountID } = await initialTasks(activeAccount);
       const keyStore = new keyStores.InMemoryKeyStore();
       const keyPair = KeyPair.fromString(secret);
       await keyStore.setKey("testnet", accountID, keyPair);
@@ -38,14 +42,14 @@ const SendTokens = () => {
       const convertedAmount = new BN(yoctoAmount);
 
       if (selectedAsset !== "") {
-        console.log("OTHER SSETS TRANSFER");
         let [contractAddress, decimals] = selectedAsset.split(":");
+        console.log("OTHER SSETS TRANSFER", contractAddress, receiver);
         let transfer = await senderAccount.viewFunction(
           contractAddress,
           "ft_transfer",
           {
             receiver_id: receiver,
-            amount: amount * 10 ** decimals,
+            amount: (amount * 10 ** decimals).toString(),
           }
         );
         console.log("HASH========", transfer);

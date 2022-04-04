@@ -90,20 +90,14 @@ export const handleAirdrop = async (network, publicKey) => {
   }
 };
 
-export const initialTasks = async (
-  currentWalletName,
-  currentAccountAddress = ""
-) => {
+export const initialTasks = async activeAccount => {
   let userInfo = await getStorageSyncValue("userInfo");
-  console.log("info=========", userInfo, currentWalletName);
-  let accountsList = userInfo[currentWalletName]["accounts"];
-  let firstUser = currentAccountAddress
-    ? accountsList[currentAccountAddress]
-    : accountsList[Object.keys(accountsList)[0]];
+  let accountsList = userInfo[activeAccount.walletName]["accounts"];
+  let accountID = userInfo[activeAccount.walletName].accountID;
+  let firstUser = accountsList[Object.keys(accountsList)[0]];
 
-  let { data, secretKey, address, accountID } = firstUser;
+  let { data, secretKey, address } = firstUser;
   let hashedPassword = await getStorageSyncValue("hashedPassword");
-  console.log("DEC-----", data, secretKey);
   const mnemonic = await decryptMessage(data, hashedPassword);
   const privateKey = await decryptMessage(secretKey, hashedPassword);
 
@@ -113,38 +107,8 @@ export const initialTasks = async (
     mnemonic,
     address,
     accountID,
+    allAccounts: Object.keys(userInfo),
   };
-};
-
-const fetchTokens = async ({ account }) => {
-  console.log("a", account);
-  let address = account.data.parsed.info.mint;
-  let { data } = await axios.get(
-    "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json"
-  );
-  let tokenList = data.tokens;
-  // return new TokenListProvider().resolve().then(tokens => {
-
-  tokenList = await Promise.all(
-    tokenList
-      .filter(tk => tk.address === address)
-      .map(async tk => {
-        if (tk.address === address) {
-          tk.amount = account.data.parsed.info.tokenAmount.uiAmount;
-          let symbol = tk.symbol.toLowerCase();
-
-          if (tokensJSON[symbol]) {
-            let usdPrice = await fetchRates(tokensJSON[symbol].id);
-            console.log("USD========", usdPrice);
-            tk.priceInUSD = (Number(tk.amount) * Number(usdPrice)).toFixed(4);
-            setDataWithExpiry(symbol, usdPrice, USD_CACHE_TIME);
-          }
-          return tk;
-        }
-      })
-  );
-  return tokenList.length > 0 ? tokenList : [];
-  // });
 };
 
 export const showAllHoldings = async (accountID, near) => {
@@ -256,6 +220,5 @@ export const checkAccountStatus = async accountInfo => {
 
 export const fetchBalance = async account => {
   const balance = await account.getAccountBalance();
-  console.log("BAL======", balance);
   return balance.available / 10 ** 24;
 };

@@ -37,12 +37,17 @@ const Dashboard = () => {
   const [seedPhrase, setSeedPhrase] = useState("");
 
   const [balance, setBalance] = useState(0);
+  const [allWallets, setAllWallets] = useState([]);
+  const [currentAccountID, setCurrentAccountID] = useState("");
 
   const currentWalletName = useSelector(
     ({ walletEncrypted }) => walletEncrypted?.currentWalletName
   );
   const allTokens = useSelector(
     ({ walletEncrypted }) => walletEncrypted?.allTokens
+  );
+  const activeAccount = useSelector(
+    ({ walletEncrypted }) => walletEncrypted?.activeAccount
   );
 
   const dispatch = useDispatch();
@@ -55,12 +60,19 @@ const Dashboard = () => {
 
   useEffect(() => {
     (async () => {
-      const { address, mnemonic, secret, accountID } = await initialTasks(
-        currentWalletName
-      );
+      const { address, mnemonic, secret, accountID, allAccounts } =
+        await initialTasks(activeAccount);
+      console.log("accc", accountID);
+
+      let userInfo = await getStorageSyncValue("userInfo");
       const account = await near.account(accountID);
       const availableBalance = await fetchBalance(account);
       const allTokens = await showAllHoldings(accountID, near);
+      let wallets = [];
+      allAccounts.map(acc => {
+        wallets.push(userInfo[acc]);
+      });
+      setAllWallets(wallets);
       dispatch({
         type: SHOW_ALL_CUSTOM_TOKENS,
         payload: allTokens,
@@ -70,21 +82,21 @@ const Dashboard = () => {
       setPrivateKey(secret);
       setSeedPhrase(mnemonic);
       setBalance(availableBalance);
+      setCurrentAccountID(accountID);
     })();
-  }, []);
+  }, [activeAccount]);
 
-  // useEffect(() => {
-  //   (async () => {
-  //     if (keypair.publicKey) {
-  //       try {
-  //         let balance = await fetchBalance(CURRENT_NETWORK, keypair.publicKey);
-  //         setBalance(balance);
-  //       } catch (error) {
-  //         console.log("ERR===", error);
-  //       }
-  //     }
-  //   })();
-  // }, [airdropLoading, keypair.publicKey]);
+  const changeAccount = async e => {
+    let [walletName, accId] = e.target.value.split(":");
+    console.log("ACCC============================", accId);
+    setCurrentAccountID(accId);
+    dispatch({
+      type: SWITCH_ACCOUNT,
+      payload: {
+        walletName,
+      },
+    });
+  };
 
   return (
     <>
@@ -92,23 +104,30 @@ const Dashboard = () => {
       <h3 style={{ overflowWrap: "break-word" }}>Address: {address}</h3>
       <h3>SEED PHRASE: {seedPhrase}</h3>
 
-      {/* <select onChange={e => changeAccount(e)}>
-        {Object.keys(allAccounts).map((add, i) => (
-          <option key={i} value={add}>
-            {add}
+      <select onChange={e => changeAccount(e)}>
+        {allWallets.map((add, i) => (
+          <option
+            key={i}
+            value={`${add.name}:${add.accountID}`}
+            selected={currentAccountID}
+          >
+            {add.accountID}
           </option>
         ))}
-      </select> */}
+      </select>
 
       <h4>NEAR Balance: {balance} NEAR</h4>
       <Link to="/send">
         <button>Send</button>
       </Link>
 
-      {/* <button onClick={createAccount}>Create Account</button>
+      <Link to="/seed-phrase">
+        <button>Create Account</button>
+      </Link>
+
       <Link to="/import-account">
         <button>Import Account</button>
-      </Link> */}
+      </Link>
 
       <h2>Your Holdings</h2>
       <ul>
