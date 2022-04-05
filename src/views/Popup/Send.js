@@ -76,6 +76,8 @@ const SendTokens = () => {
         error.message.includes("no matching key pair found in InMemorySigner")
       ) {
         alert("You dont have permission");
+      } else {
+        alert(error.message);
       }
     }
   };
