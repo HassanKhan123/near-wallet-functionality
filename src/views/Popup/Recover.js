@@ -1,101 +1,118 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import * as Bip39 from "bip39";
-import { Keypair } from "@solana/web3.js";
 import { useNavigate } from "react-router-dom";
-import b58 from "b58";
 
+import {
+  encryptMessage,
+  getAccountIds,
+  getStorageSyncValue,
+  setStorageSyncValue,
+} from "../../utils/utilsUpdated";
+import { parseSeedPhrase } from "near-seed-phrase";
+import { KeyPair } from "near-api-js";
+import { useDispatch } from "react-redux";
 import {
   CREATE_WALLET,
   IMPORT_WALLET,
   SET_CURRENT_WALLET_NAME,
+  SWITCH_ACCOUNT,
 } from "../../redux/actionTypes";
-import { encryptMessage, setStorageSyncValue } from "../../utils/utilsUpdated";
 
-const Recover = () => {
-  const [seedPhrase, setSeedPhrase] = useState("");
-  const [password, setPassword] = useState("");
+const ImportAccount = () => {
   const [loading, setLoading] = useState(false);
+  const [phrase, setPhrase] = useState("");
+  const [password, setPassword] = useState("");
 
   const dispatch = useDispatch();
+
   const navigate = useNavigate();
 
-  const onRecover = async () => {
-    if (!password) {
-      alert("Password is required");
-    } else {
-      try {
-        setLoading(true);
-        const inputMnemonic = seedPhrase.trim().toLowerCase();
-        const split = seedPhrase.split(" ");
-        if (split.length === 1) {
-          throw new Error("Invalid Seed Phrase");
-        }
-        const seed = Bip39.mnemonicToSeedSync(inputMnemonic).slice(0, 32);
-        const ciphertext = encryptMessage(inputMnemonic, password);
-        const importedAccount = Keypair.fromSeed(seed);
-        let cipherKey = encryptMessage(
-          b58.encode(importedAccount.secretKey),
-          password
-        );
-        let userInfo = {
-          wallet1: {
-            name: "wallet1",
-            accounts: {
-              [importedAccount.publicKey]: {
-                data: ciphertext,
-                address: importedAccount.publicKey,
-                secretKey: cipherKey,
-                keypair: importedAccount,
-              },
+  const recoverAccount = async () => {
+    try {
+      const split = phrase.split(" ");
+      if (split.length === 1) {
+        throw new Error("Invalid Seed Phrase");
+      }
+      if (!phrase) return;
+      if (!password) {
+        alert("Password is required");
+        return;
+      }
+      setLoading(true);
+      const { secretKey, seedPhrase } = parseSeedPhrase(phrase);
+
+      const keyPair = KeyPair.fromString(secretKey);
+      const publicKey = keyPair.publicKey.toString();
+
+      const accountIdsByPublickKey = await getAccountIds(publicKey);
+
+      const cipherPrivateKey = encryptMessage(secretKey, password);
+      const cipherPhrase = encryptMessage(seedPhrase, password);
+
+      let userInfo = {
+        wallet1: {
+          name: "wallet1",
+          accountID: accountIdsByPublickKey,
+          accounts: {
+            [publicKey]: {
+              data: cipherPhrase,
+              address: publicKey,
+              secretKey: cipherPrivateKey,
             },
           },
-        };
-        dispatch({
-          type: IMPORT_WALLET,
-          payload: {
-            walletImported: true,
-          },
-        });
-        dispatch({
-          type: CREATE_WALLET,
-          payload: {
-            isLoggedIn: true,
-          },
-        });
-        dispatch({
-          type: SET_CURRENT_WALLET_NAME,
-          payload: "wallet1",
-        });
+        },
+      };
 
-        await setStorageSyncValue("userInfo", userInfo);
-        await setStorageSyncValue("hashedPassword", password);
-        await setStorageSyncValue("accounts", 0);
-        localStorage.setItem("wallet", true);
-        navigate("/dashboard");
-      } catch (error) {
-        setLoading(false);
-        alert(error.message);
-      }
+      dispatch({
+        type: SWITCH_ACCOUNT,
+        payload: {
+          walletName: "wallet1",
+        },
+      });
+
+      dispatch({
+        type: IMPORT_WALLET,
+        payload: {
+          walletImported: true,
+        },
+      });
+      dispatch({
+        type: CREATE_WALLET,
+        payload: {
+          isLoggedIn: true,
+        },
+      });
+      dispatch({
+        type: SET_CURRENT_WALLET_NAME,
+        payload: "wallet1",
+      });
+
+      await setStorageSyncValue("userInfo", userInfo);
+      await setStorageSyncValue("hashedPassword", password);
+      await setStorageSyncValue("accounts", 0);
+      localStorage.setItem("wallet", true);
+      navigate("/dashboard");
+    } catch (error) {
+      console.log("err===", error.message);
+      setLoading(false);
+      alert(error.message);
     }
   };
 
   return (
     <div>
-      <h3>Enter seed phrase</h3>
-      <input value={seedPhrase} onChange={e => setSeedPhrase(e.target.value)} />
+      <h3>Recover Account from Seed Phrase</h3>
+      <input value={phrase} onChange={e => setPhrase(e.target.value)} />
       <input
         value={password}
-        onChange={e => setPassword(e.target.value)}
-        placeholder="Enter Password"
         type="password"
+        onChange={e => setPassword(e.target.value)}
       />
       {loading ? (
-        <p>Loading!!</p>
+        <p>Loading!!!</p>
       ) : (
-        <button onClick={onRecover}>Recover</button>
+        <button onClick={recoverAccount}>Recover</button>
       )}
-      <button style={{ marginTop: 10 }} onClick={() => navigate("/popup.html")}>
+      <button style={{ marginTop: 10 }} onClick={() => navigate("/dashboard")}>
         {" "}
         {"<"} Go Back
       </button>
@@ -103,4 +120,4 @@ const Recover = () => {
   );
 };
 
-export default Recover;
+export default ImportAccount;

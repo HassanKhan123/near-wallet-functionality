@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import {
   encryptMessage,
@@ -9,12 +9,13 @@ import {
   setStorageSyncValue,
 } from "../../utils/utilsUpdated";
 import { parseSeedPhrase } from "near-seed-phrase";
-import { KeyPair, keyStores } from "near-api-js";
-import { PublicKey } from "near-api-js/lib/utils";
+import { KeyPair } from "near-api-js";
+import { SWITCH_ACCOUNT } from "../../redux/actionTypes";
 
 const ImportAccount = () => {
   const [loading, setLoading] = useState(false);
   const [phrase, setPhrase] = useState("");
+  const dispatch = useDispatch();
 
   const navigate = useNavigate();
 
@@ -61,6 +62,13 @@ const ImportAccount = () => {
           },
         },
       };
+
+      dispatch({
+        type: SWITCH_ACCOUNT,
+        payload: {
+          walletName: keys ? `wallet${keys.length + 1}` : "wallet1",
+        },
+      });
 
       await setStorageSyncValue("userInfo", userInfo);
       setLoading(false);
