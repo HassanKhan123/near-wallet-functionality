@@ -1,24 +1,9 @@
-import { clusterApiUrl, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import crypto from "crypto-js";
-import * as Bip39 from "bip39";
-import * as web3 from "@solana/web3.js";
-import b58 from "b58";
 import axios from "axios";
-import { TokenListProvider } from "@solana/spl-token-registry";
-import * as splToken from "@solana/spl-token";
-import nacl from "tweetnacl";
-import * as ed25519 from "ed25519-hd-key";
-import { generateSeedPhrase, parseSeedPhrase } from "near-seed-phrase";
+import { generateSeedPhrase } from "near-seed-phrase";
 import { KeyPair } from "near-api-js";
 
-import tokensJSON from "../tokens.json";
-import {
-  COMMITMENT,
-  CURRENT_NETWORK,
-  OPEN_IN_WEB,
-  STORAGE,
-  USD_CACHE_TIME,
-} from "../constants";
+import { OPEN_IN_WEB, STORAGE } from "../constants";
 
 export const getStorageSyncValue = async keyName => {
   try {
@@ -70,24 +55,6 @@ export const decryptMessage = (cipherText, secret) => {
   let decryptedText = JSON.parse(bytes.toString(crypto.enc.Utf8));
 
   return decryptedText;
-};
-
-export const handleAirdrop = async (network, publicKey) => {
-  console.log("air===", publicKey, new Uint8Array(publicKey));
-  if (!publicKey) return;
-
-  try {
-    const connection = new Connection(clusterApiUrl(network), COMMITMENT);
-    const confirmation = await connection.requestAirdrop(
-      publicKey,
-      LAMPORTS_PER_SOL
-    );
-    await connection.confirmTransaction(confirmation, COMMITMENT);
-    return await fetchBalance(network, publicKey);
-  } catch (error) {
-    console.log(error);
-    return;
-  }
 };
 
 export const initialTasks = async activeWallet => {
@@ -142,33 +109,6 @@ export const showAllHoldings = async (accountID, near) => {
   return tokensInfo;
 };
 
-export const fetchUsdRate = async symbol => {
-  let usdRate;
-  let tokenPrice = JSON.parse(localStorage.getItem(symbol));
-  const now = new Date();
-
-  if (tokenPrice && tokenPrice.expiry > now.getTime()) {
-    console.log("FROM LOCAL=================");
-    usdRate = Number(tokenPrice.data);
-  } else {
-    usdRate = await fetchRates(symbol);
-
-    setDataWithExpiry(symbol, usdRate, USD_CACHE_TIME);
-  }
-
-  return usdRate;
-};
-
-export const fetchRates = async coinId => {
-  const { data } = await axios.get(
-    `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`
-  );
-
-  let id = coinId;
-
-  return data.hasOwnProperty(id.toLowerCase()) ? data[id.toLowerCase()].usd : 0;
-};
-
 export const setDataWithExpiry = (key, data, expiry) => {
   const now = new Date();
 
@@ -177,25 +117,6 @@ export const setDataWithExpiry = (key, data, expiry) => {
     expiry: now.getTime() + expiry,
   };
   localStorage.setItem(key, JSON.stringify(item));
-};
-
-export const accountFromSeed = (seed, walletIndex) => {
-  const derivedSeed = deriveSeed(seed, walletIndex);
-  console.log("DER---------", derivedSeed);
-  const keyPair = nacl.sign.keyPair.fromSeed(derivedSeed);
-
-  const acc = new web3.Keypair(keyPair);
-  return acc;
-};
-
-export const deriveSeed = (seed, walletIndex) => {
-  try {
-    console.log("seed----------", seed);
-    const path44Change = `m/44'/501'/${walletIndex}'/0'`;
-    return ed25519.derivePath(path44Change, seed).key;
-  } catch (error) {
-    console.log("err===", error);
-  }
 };
 
 export const generateSeed = entropy => {

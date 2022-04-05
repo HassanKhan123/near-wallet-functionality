@@ -13,7 +13,6 @@ import {
   SWITCH_ACCOUNT,
 } from "../../redux/actionTypes";
 import { CONFIG } from "../../constants";
-import { fetchUsdRateOfTokens } from "../../redux/actions/walletActions";
 import { connect } from "near-api-js";
 
 let near;
