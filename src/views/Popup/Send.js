@@ -26,14 +26,14 @@ const SendTokens = () => {
     ({ walletEncrypted }) => walletEncrypted?.allTokens
   );
 
-  const activeAccount = useSelector(
-    ({ walletEncrypted }) => walletEncrypted?.activeAccount
+  const activeWallet = useSelector(
+    ({ walletEncrypted }) => walletEncrypted?.activeWallet
   );
 
   const sendTransaction = async () => {
     setLoading(true);
     try {
-      const { secret, accountID } = await initialTasks(activeAccount);
+      const { secret, accountID } = await initialTasks(activeWallet);
       const keyStore = new keyStores.InMemoryKeyStore();
       const keyPair = KeyPair.fromString(secret);
       await keyStore.setKey("testnet", accountID, keyPair);

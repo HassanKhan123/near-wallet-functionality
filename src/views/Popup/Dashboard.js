@@ -1,31 +1,18 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import * as web3 from "@solana/web3.js";
-import b58 from "b58";
-import * as Bip39 from "bip39";
 
 import {
-  accountFromSeed,
-  decryptMessage,
-  encryptMessage,
   fetchBalance,
   getStorageSyncValue,
-  handleAirdrop,
   initialTasks,
-  setStorageSyncValue,
   showAllHoldings,
 } from "../../utils/utilsUpdated";
 import {
   SHOW_ALL_CUSTOM_TOKENS,
   SWITCH_ACCOUNT,
 } from "../../redux/actionTypes";
-import {
-  COMMITMENT,
-  CONFIG,
-  CURRENT_NETWORK,
-  SOLANA_SYMBOL,
-} from "../../constants";
+import { CONFIG } from "../../constants";
 import { fetchUsdRateOfTokens } from "../../redux/actions/walletActions";
 import { connect } from "near-api-js";
 
@@ -38,17 +25,19 @@ const Dashboard = () => {
 
   const [balance, setBalance] = useState(0);
   const [allWallets, setAllWallets] = useState([]);
-  const [currentAccountID, setCurrentAccountID] = useState("");
 
-  const currentWalletName = useSelector(
-    ({ walletEncrypted }) => walletEncrypted?.currentWalletName
-  );
   const allTokens = useSelector(
     ({ walletEncrypted }) => walletEncrypted?.allTokens
   );
-  const activeAccount = useSelector(
-    ({ walletEncrypted }) => walletEncrypted?.activeAccount
+  const activeWallet = useSelector(
+    ({ walletEncrypted }) => walletEncrypted?.activeWallet
   );
+
+  const activeAccountID = useSelector(
+    ({ walletEncrypted }) => walletEncrypted?.activeAccountID
+  );
+
+  console.log(activeWallet);
 
   const dispatch = useDispatch();
 
@@ -61,7 +50,7 @@ const Dashboard = () => {
   useEffect(() => {
     (async () => {
       const { address, mnemonic, secret, accountID, allAccounts } =
-        await initialTasks(activeAccount);
+        await initialTasks(activeWallet);
       console.log("accc", accountID);
 
       let userInfo = await getStorageSyncValue("userInfo");
@@ -82,22 +71,22 @@ const Dashboard = () => {
       setPrivateKey(secret);
       setSeedPhrase(mnemonic);
       setBalance(availableBalance);
-      setCurrentAccountID(accountID);
     })();
-  }, [activeAccount]);
+  }, [activeWallet]);
 
   const changeAccount = async e => {
     let [walletName, accId] = e.target.value.split(":");
     console.log("ACCC============================", accId);
-    setCurrentAccountID(accId);
     dispatch({
       type: SWITCH_ACCOUNT,
       payload: {
-        walletName,
+        activeWallet: walletName,
+        activeAccountID: accId,
       },
     });
   };
 
+  console.log("aaaa", activeAccountID);
   return (
     <>
       <h3 style={{ overflowWrap: "break-word" }}>PRIVATE KEY: {privateKey}</h3>
@@ -107,9 +96,9 @@ const Dashboard = () => {
       <select onChange={e => changeAccount(e)}>
         {allWallets.map((add, i) => (
           <option
-            key={i}
+            key={add.accountID}
             value={`${add.name}:${add.accountID}`}
-            selected={currentAccountID}
+            selected={add.accountID === activeAccountID}
           >
             {add.accountID}
           </option>

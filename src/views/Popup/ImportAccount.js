@@ -21,6 +21,11 @@ const ImportAccount = () => {
 
   const importAccount = async () => {
     try {
+      const split = phrase.split(" ");
+      if (split.length === 1) {
+        throw new Error("Invalid Seed Phrase");
+      }
+      if (!phrase) return;
       const { secretKey, seedPhrase } = parseSeedPhrase(phrase);
 
       const keyPair = KeyPair.fromString(secretKey);
@@ -66,7 +71,8 @@ const ImportAccount = () => {
       dispatch({
         type: SWITCH_ACCOUNT,
         payload: {
-          walletName: keys ? `wallet${keys.length + 1}` : "wallet1",
+          activeWallet: keys ? `wallet${keys.length + 1}` : "wallet1",
+          activeAccountID: accountIdsByPublickKey,
         },
       });
 
@@ -82,7 +88,7 @@ const ImportAccount = () => {
 
   return (
     <div>
-      <h3>Import Account from Private Key</h3>
+      <h3>Import Account from Seed Phrase</h3>
       <input value={phrase} onChange={e => setPhrase(e.target.value)} />
       {loading ? (
         <p>Loading!!!</p>

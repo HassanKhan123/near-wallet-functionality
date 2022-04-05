@@ -90,10 +90,10 @@ export const handleAirdrop = async (network, publicKey) => {
   }
 };
 
-export const initialTasks = async activeAccount => {
+export const initialTasks = async activeWallet => {
   let userInfo = await getStorageSyncValue("userInfo");
-  let accountsList = userInfo[activeAccount.walletName]["accounts"];
-  let accountID = userInfo[activeAccount.walletName].accountID;
+  let accountsList = userInfo[activeWallet]["accounts"];
+  let accountID = userInfo[activeWallet].accountID;
   let firstUser = accountsList[Object.keys(accountsList)[0]];
 
   let { data, secretKey, address } = firstUser;

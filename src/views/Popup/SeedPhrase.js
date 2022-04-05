@@ -76,9 +76,11 @@ const Seedphrase = () => {
     dispatch({
       type: SWITCH_ACCOUNT,
       payload: {
-        walletName: keys ? `wallet${keys.length + 1}` : "wallet1",
+        activeWallet: keys ? `wallet${keys.length + 1}` : "wallet1",
+        activeAccountID: "",
       },
     });
+
     localStorage.setItem("wallet", true);
     dispatch({ type: SET_CURRENT_WALLET_NAME, payload: "wallet1" });
     await setStorageSyncValue("userInfo", userInfo);

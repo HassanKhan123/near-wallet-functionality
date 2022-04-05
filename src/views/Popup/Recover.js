@@ -65,7 +65,8 @@ const ImportAccount = () => {
       dispatch({
         type: SWITCH_ACCOUNT,
         payload: {
-          walletName: "wallet1",
+          activeWallet: "wallet1",
+          activeAccountID: accountIdsByPublickKey,
         },
       });
 
@@ -101,11 +102,16 @@ const ImportAccount = () => {
   return (
     <div>
       <h3>Recover Account from Seed Phrase</h3>
-      <input value={phrase} onChange={e => setPhrase(e.target.value)} />
+      <input
+        value={phrase}
+        onChange={e => setPhrase(e.target.value)}
+        placeholder="Enter Seed Phrase"
+      />
       <input
         value={password}
         type="password"
         onChange={e => setPassword(e.target.value)}
+        placeholder="Enter Password"
       />
       {loading ? (
         <p>Loading!!!</p>

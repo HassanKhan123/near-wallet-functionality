@@ -14,7 +14,8 @@ const initialState = {
   wallet: null,
   currentWalletName: "wallet1",
   allTokens: [{ name: "NEAR", symbol: "NEAR" }],
-  activeAccount: {},
+  activeWallet: "",
+  activeAccountID: "",
   solanaUsdPrice: 0,
 };
 
@@ -71,7 +72,8 @@ export default function (state = initialState, action) {
     case SWITCH_ACCOUNT:
       return {
         ...state,
-        activeAccount: { ...payload },
+        activeWallet: payload.activeWallet,
+        activeAccountID: payload.activeAccountID,
       };
 
     case SET_SOLANA_USD_PRICE:
