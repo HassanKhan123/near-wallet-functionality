@@ -16,7 +16,7 @@ const PopupPage = props => {
   return (
     <div style={{ height: 300, width: 300 }}>
       <Link to="/recover">
-        <button>Import Wallet</button>
+        <button>Recover Wallet</button>
       </Link>
       <Link to="/create-password">
         <button>Create a wallet</button>
