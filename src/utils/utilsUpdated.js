@@ -15,7 +15,11 @@ export const getStorageSyncValue = async keyName => {
     }
     return new Promise((resolve, reject) => {
       STORAGE?.get([keyName], function (extractedValue) {
-        resolve(JSON.parse(extractedValue[keyName]));
+        if (extractedValue[keyName]) {
+          resolve(JSON.parse(extractedValue[keyName]));
+        } else {
+          resolve(false);
+        }
       });
     });
   } catch (error) {

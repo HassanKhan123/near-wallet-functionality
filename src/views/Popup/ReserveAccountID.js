@@ -67,6 +67,7 @@ const ReserveAccountID = () => {
   return (
     <div>
       <h1>Create Account ID</h1>
+      <p>Example ID's: thisismyid.testnet, firstid.testnet</p>
 
       <input
         value={accountID}
