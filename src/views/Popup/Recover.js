@@ -51,7 +51,8 @@ const ImportAccount = () => {
       let userInfo = {
         wallet1: {
           name: "wallet1",
-          accountID: accountIdsByPublickKey,
+          accountID:
+            accountIdsByPublickKey.length > 0 && accountIdsByPublickKey[0],
           accounts: {
             [publicKey]: {
               data: cipherPhrase,

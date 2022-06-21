@@ -3,7 +3,7 @@ import axios from "axios";
 import { generateSeedPhrase } from "near-seed-phrase";
 import { KeyPair } from "near-api-js";
 
-import { OPEN_IN_WEB, STORAGE } from "../constants";
+import { BASE_URL, OPEN_IN_WEB, STORAGE } from "../constants";
 
 export const getStorageSyncValue = async keyName => {
   try {
@@ -84,12 +84,11 @@ export const initialTasks = async activeWallet => {
 
 export const showAllHoldings = async (accountID, near) => {
   const { data } = await axios.get(
-    `https://helper.testnet.near.org/account/${accountID}/likelyTokens`
+    `${BASE_URL}/account/${accountID}/likelyTokens`
   );
 
   const account = await near.account(accountID);
   let tokensInfo = [];
-
   await Promise.all(
     data.map(async token => {
       let tokenInfo = await account.viewFunction(token, "ft_metadata", {
@@ -145,13 +144,15 @@ export const checkAccountStatus = async accountInfo => {
 
 export const fetchBalance = async account => {
   const balance = await account.getAccountBalance();
+  console.log("AHahh", balance);
   return balance.available / 10 ** 24;
 };
 
-export const getAccountIds = async publicKey => {
-  const { data } = await axios.get(
-    `https://helper.testnet.near.org/publicKey/${publicKey}/accounts`
-  );
+export let controller;
 
-  return data[0];
-};
+export async function getAccountIds(publicKey) {
+  controller = new AbortController();
+  return await fetch(`${BASE_URL}/publicKey/${publicKey}/accounts`, {
+    signal: controller.signal,
+  }).then(res => res.json());
+}

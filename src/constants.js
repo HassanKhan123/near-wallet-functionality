@@ -11,12 +11,19 @@ export const SOLANA_SYMBOL = "solana";
 export const CACHE_TIME = 60000;
 export const USD_CACHE_TIME = 120000;
 
-export const CURRENT_NETWORK = "testnet";
+export const CURRENT_NETWORK = "default";
+export const ACCOUNT_HELPER_URL = `https://near-contract-helper.onrender.com`;
+
+export const BASE_URL = "https://api.kitwallet.app";
+
 export const CONFIG = {
   networkId: CURRENT_NETWORK,
   keyStore: new keyStores.InMemoryKeyStore(),
-  nodeUrl: `https://rpc.${CURRENT_NETWORK}.near.org`,
-  walletUrl: `https://wallet.${CURRENT_NETWORK}.near.org`,
-  helperUrl: `https://helper.${CURRENT_NETWORK}.near.org`,
-  explorerUrl: `https://explorer.${CURRENT_NETWORK}.near.org`,
+  // nodeUrl: `https://archival-rpc.${CURRENT_NETWORK}.near.org`,
+  // walletUrl: `https://wallet.${CURRENT_NETWORK}.near.org`,
+  // explorerUrl: `https://explorer.${CURRENT_NETWORK}.near.org`,
+  helperUrl: BASE_URL,
+  nodeUrl: `https://rpc.mainnet.near.org`,
+  walletUrl: `https://wallet.near.org`,
+  explorerUrl: `https://explorer.near.org`,
 };
